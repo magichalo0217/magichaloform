@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Magic Halo 🐚 神奇海螺 法會報名表</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap');
+
+  :root {
+    --gold: #c97b8a;
+    --gold-light: #e8a8b5;
+    --deep: #3d1f26;
+    --deep2: #5a2d38;
+    --bg: #f5ede9;
+    --card: rgba(255,255,255,0.6);
+    --border: rgba(180,110,120,0.3);
+    --text: #3d2429;
+    --muted: #9a7078;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Noto Sans TC', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    background-image:
+      radial-gradient(ellipse at 20% 10%, rgba(220,170,175,0.35) 0%, transparent 55%),
+      radial-gradient(ellipse at 80% 90%, rgba(195,150,160,0.25) 0%, transparent 55%),
+      radial-gradient(ellipse at 50% 50%, rgba(240,210,215,0.2) 0%, transparent 70%);
+  }
+
+  /* ── 管理員日期設定 ── */
+  #admin-panel {
+    display: none;
+    background: rgba(220,170,175,0.97);
+    border-bottom: 2px solid var(--gold);
+    padding: 16px 20px;
+  }
+  #admin-panel h3 { color: var(--gold); font-size: 14px; margin-bottom: 12px; }
+  .admin-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; }
+  .admin-field { display: flex; flex-direction: column; gap: 4px; }
+  .admin-field label { font-size: 12px; color: var(--muted); }
+  .admin-field input {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 12px;
+    color: var(--text);
+    font-size: 13px;
+    font-family: 'Noto Sans TC', sans-serif;
+    outline: none;
+    width: 160px;
+  }
+  .admin-btn {
+    background: linear-gradient(135deg, var(--gold), var(--gold-light));
+    color: var(--deep);
+    border: none;
+    border-radius: 8px;
+    padding: 9px 20px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    align-self: flex-end;
+  }
+  #admin-toggle {
+    position: fixed;
+    bottom: 50px;
+    left: 10px;
+    background: transparent;
+    border: none;
+    padding: 6px 8px;
+    font-size: 13px;
+    color: rgba(160,80,95,0.3);
+    cursor: pointer;
+    z-index: 200;
+    user-select: none;
+    line-height: 1;
+    letter-spacing: 0;
+  }
+  #admin-toggle:hover { color: rgba(160,80,95,0.6); }
+  #admin-pw-modal {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 999;
+    align-items: center;
+    justify-content: center;
+  }
+  #admin-pw-modal.show { display: flex; }
+  .pw-box {
+    background: #fff0f2;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px 24px;
+    width: 280px;
+    text-align: center;
+    position: relative;
+  }
+  .pw-close {
+    position: absolute;
+    top: 10px; right: 14px;
+    font-size: 18px;
+    color: var(--muted);
+    cursor: pointer;
+    line-height: 1;
+    background: none;
+    border: none;
+    padding: 0;
+  }
+  .pw-close:hover { color: var(--text); }
+  .pw-box h3 { color: var(--gold); margin-bottom: 16px; font-size: 15px; }
+  .pw-box input {
+    width: 100%;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    color: var(--text);
+    font-size: 16px;
+    text-align: center;
+    letter-spacing: 4px;
+    outline: none;
+    margin-bottom: 14px;
+    font-family: 'Noto Sans TC', sans-serif;
+  }
+  .pw-box button.pw-confirm {
+    width: 100%;
+    background: linear-gradient(135deg, var(--gold), var(--gold-light));
+    color: var(--deep);
+    border: none;
+    border-radius: 8px;
+    padding: 10px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .pw-err { color: #e74c3c; font-size: 12px; margin-top: 8px; display: none; }
+
+  .header {
+    text-align: center;
+    padding: 36px 20px 28px;
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(180deg, rgba(220,160,170,0.4) 0%, transparent 100%);
+  }
+  .header-emoji { font-size: 44px; display: block; margin-bottom: 8px; }
+  .header h1 {
+    font-size: 26px;
+    font-weight: 900;
+    background: linear-gradient(135deg, #b05060, #d4808f, #a04050);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: 2px;
+    margin-bottom: 6px;
+  }
+  .header p { color: var(--muted); font-size: 13px; }
+  .event-badge {
+    display: inline-block;
+    background: linear-gradient(135deg, #c97b8a, #e8a8b5);
+    color: #fff;
+    padding: 6px 20px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 700;
+    margin-top: 10px;
+    letter-spacing: 1px;
+    border: 1px solid rgba(200,130,140,0.4);
+  }
+
+  .container { max-width: 760px; margin: 0 auto; padding: 28px 20px 100px; }
+
+  .notice-box {
+    background: rgba(230,185,195,0.2);
+    border: 1px solid rgba(180,110,120,0.25);
+    border-radius: 12px;
+    padding: 14px 18px;
+    margin-bottom: 20px;
+    font-size: 13px;
+    color: #ffffff;
+    line-height: 1.8;
+  }
+  .notice-box strong { color: #ffffff; }
+
+  .section-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 17px;
+    font-weight: 700;
+    color: #b05060;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(180,110,120,0.25);
+  }
+  .section-title .num {
+    background: linear-gradient(135deg, #c97b8a, #e8a8b5);
+    color: #fff;
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 900;
+    flex-shrink: 0;
+  }
+
+  .field { margin-bottom: 16px; }
+  .field label {
+    display: block;
+    font-size: 13px;
+    font-weight: 700;
+    color: #a05060;
+    margin-bottom: 7px;
+  }
+  .field label .req { color: #c0404f; margin-left: 3px; }
+  .field label .hint { font-size: 11px; color: #ffffff; font-weight: 400; margin-left: 6px; }
+
+  input[type="text"], textarea, select {
+    width: 100%;
+    background: rgba(255,255,255,0.75);
+    border: 1px solid rgba(180,110,120,0.3);
+    border-radius: 10px;
+    padding: 11px 15px;
+    color: var(--text);
+    font-size: 14px;
+    font-family: 'Noto Sans TC', sans-serif;
+    outline: none;
+    transition: border 0.2s, background 0.2s;
+  }
+  input:focus, textarea:focus { border-color: var(--gold); background: rgba(255,240,243,0.9); }
+  input::placeholder, textarea::placeholder { color: rgba(120,80,85,0.4); }
+  textarea { resize: vertical; min-height: 78px; }
+
+  .radio-group { display: flex; flex-wrap: wrap; gap: 8px; }
+  .radio-item, .checkbox-item { display: none; }
+  .radio-label, .pay-label {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(255,255,255,0.6);
+    border: 1px solid rgba(180,110,120,0.25);
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--muted);
+    user-select: none;
+  }
+  .radio-item:checked + .radio-label,
+  .pay-item:checked + .pay-label {
+    background: rgba(210,130,145,0.18);
+    border-color: var(--gold);
+    color: var(--deep);
+    font-weight: 700;
+  }
+
+  /* 項目 Grid */
+  .items-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+  @media (max-width: 480px) { .items-grid { grid-template-columns: 1fr; } }
+
+  .item-card {
+    background: rgba(255,255,255,0.65);
+    border: 1px solid rgba(180,110,120,0.25);
+    border-radius: 12px;
+    padding: 12px 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+  }
+  .item-card:hover { border-color: rgba(180,110,120,0.5); background: rgba(255,230,235,0.7); }
+  .item-card.selected {
+    background: rgba(220,150,165,0.2);
+    border-color: var(--gold);
+    box-shadow: 0 0 12px rgba(200,120,135,0.2);
+  }
+  .item-card.selected::after {
+    content: '✓';
+    position: absolute;
+    top: 8px; right: 10px;
+    color: var(--gold);
+    font-size: 15px;
+    font-weight: 900;
+  }
+  .item-name { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 4px; line-height: 1.4; }
+  .item-price { font-size: 13px; color: var(--gold); font-weight: 700; }
+
+  .qty-row {
+    display: none;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+    background: rgba(220,160,170,0.15);
+    border-radius: 8px;
+    padding: 7px 10px;
+  }
+  .qty-row.show { display: flex; }
+  .qty-label { font-size: 12px; color: var(--muted); flex: 1; }
+  .qty-btn {
+    width: 28px; height: 28px;
+    background: rgba(200,120,135,0.15);
+    border: 1px solid var(--gold);
+    border-radius: 6px;
+    color: var(--gold);
+    font-size: 17px;
+    font-weight: 900;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.15s;
+  }
+  .qty-btn:hover { background: rgba(200,120,135,0.3); }
+  .qty-num { font-size: 15px; font-weight: 900; color: var(--deep); min-width: 22px; text-align: center; }
+  .qty-subtotal { font-size: 12px; color: var(--gold); font-weight: 700; flex-shrink: 0; }
+
+  .custom-box {
+    background: rgba(230,185,195,0.2);
+    border: 1px dashed rgba(180,110,120,0.4);
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-top: 10px;
+  }
+  .custom-box p { font-size: 13px; color: var(--muted); margin-bottom: 10px; }
+
+  .selected-summary {
+    background: rgba(220,150,165,0.12);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-top: 18px;
+    display: none;
+  }
+  .selected-summary.show { display: block; }
+  .selected-summary h4 { font-size: 13px; color: var(--gold); font-weight: 700; margin-bottom: 10px; }
+  .summary-line {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    color: var(--muted);
+    padding: 4px 0;
+    border-bottom: 1px solid rgba(180,110,120,0.2);
+  }
+  .summary-line:last-child { border-bottom: none; }
+  .summary-line span:last-child { color: var(--deep); font-weight: 700; }
+
+  .payment-options { display: flex; flex-wrap: wrap; gap: 8px; }
+  .pay-item { display: none; }
+
+  hr.divider { border: none; border-top: 1px solid rgba(180,110,120,0.2); margin: 22px 0; }
+
+  .bank-info {
+    background: rgba(255,255,255,0.6);
+    border-radius: 10px;
+    padding: 14px 16px;
+    font-size: 13px;
+    line-height: 2;
+    color: var(--muted);
+    border: 1px solid rgba(180,110,120,0.2);
+  }
+  .bank-info strong { color: var(--deep); }
+
+  .line-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(100,180,100,0.1);
+    border: 1px solid rgba(100,160,100,0.3);
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 13px;
+    color: #3a7a3a;
+    margin-top: 12px;
+    flex-wrap: wrap;
+  }
+
+  /* 總金額 Sticky */
+  .total-bar {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: linear-gradient(135deg, #e8c8cf, #f5dde2);
+    border-top: 1px solid rgba(180,110,120,0.3);
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    z-index: 100;
+    box-shadow: 0 -4px 20px rgba(180,110,120,0.15);
+  }
+  .total-label { font-size: 13px; color: var(--muted); }
+  .total-amount {
+    font-size: 26px; font-weight: 900;
+    background: linear-gradient(135deg, #b05060, #c97b8a);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .submit-btn {
+    width: 100%;
+    background: linear-gradient(135deg, #c97b8a, #e8a8b5);
+    color: #fff;
+    border: none;
+    border-radius: 14px;
+    padding: 15px;
+    font-size: 16px;
+    font-weight: 900;
+    letter-spacing: 2px;
+    cursor: pointer;
+    margin-top: 26px;
+    transition: opacity 0.2s, transform 0.1s;
+    box-shadow: 0 4px 20px rgba(200,120,135,0.35);
+  }
+  .submit-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+  .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  #toast {
+    position: fixed;
+    bottom: 80px; left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: linear-gradient(135deg, #fff0f2, #fce4e8);
+    border: 1px solid var(--gold);
+    color: var(--deep);
+    padding: 12px 24px;
+    border-radius: 30px;
+    font-size: 14px; font-weight: 700;
+    opacity: 0; pointer-events: none;
+    transition: all 0.3s;
+    z-index: 999;
+    white-space: nowrap;
+    max-width: 90vw;
+    text-align: center;
+    box-shadow: 0 4px 16px rgba(200,120,135,0.2);
+  }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  #toast.error { border-color: #e07080; color: #a03040; background: #fff0f0; }
+</style>
+</head>
+<body>
+
+<!-- 管理員密碼 Modal -->
+<div id="admin-pw-modal" onclick="closeAdminModal(event)">
+  <div class="pw-box">
+    <button class="pw-close" onclick="closeAdminModal()">✕</button>
+    <h3>🔐 管理員登入</h3>
+    <input type="password" id="pw-input" placeholder="請輸入密碼" onkeydown="if(event.key==='Enter')checkPw()">
+    <button class="pw-confirm" onclick="checkPw()">確認</button>
+    <div class="pw-err" id="pw-err">密碼錯誤，請再試一次</div>
+  </div>
+</div>
+
+<!-- 管理員設定面板 -->
+<div id="admin-panel">
+  <h3>⚙️ 管理員設定｜每月更新法會資訊</h3>
+  <div class="admin-row">
+    <div class="admin-field">
+      <label>活動名稱</label>
+      <input type="text" id="cfg-event" placeholder="例：5/12～5/13 轉運祈福法會">
+    </div>
+    <div class="admin-field">
+      <label>茹素開始日期</label>
+      <input type="text" id="cfg-veg-start" placeholder="例：5月12日">
+    </div>
+    <div class="admin-field">
+      <label>茹素結束日期</label>
+      <input type="text" id="cfg-veg-end" placeholder="例：5月13日">
+    </div>
+    <button class="admin-btn" onclick="applyConfig()">✅ 套用更新</button>
+  </div>
+</div>
+
+<!-- Header -->
+<div class="header">
+  <span class="header-emoji">🐚</span>
+  <h1>Magic Halo 神奇海螺</h1>
+  <p>法會祈福資料登記表</p>
+  <div class="event-badge" id="event-badge">❤️‍🔥 4/14～4/15 轉運祈福法會</div>
+</div>
+
+<div class="container">
+
+  <div class="notice-box" id="notice-veg">
+    <strong>⚠️ 法會注意要點</strong><br>
+    茹素時間：<strong id="veg-dates" style="color:#e03050;">4月14日 至 4月15日</strong>，務必完成三餐吃素。<br>
+    收到疏文後請立即檢查基本資料，生日皆填農曆。<br>
+    儀式日禁食：肉類（牛/雞/豬/鴨/鵝）、海鮮（魚/蝦/螃蟹/貝類）
+  </div>
+
+  <!-- ① 基本資料 -->
+  <div class="section-title"><div class="num">1</div>基本資料</div>
+
+  <div class="field">
+    <label>本人姓名 <span class="req">*</span></label>
+    <input type="text" id="name" placeholder="請填寫真實姓名">
+  </div>
+  <div class="field">
+    <label>性別 <span class="req">*</span></label>
+    <div class="radio-group">
+      <input type="radio" name="gender" id="g-m" value="男" class="radio-item">
+      <label for="g-m" class="radio-label">♂ 男</label>
+      <input type="radio" name="gender" id="g-f" value="女" class="radio-item">
+      <label for="g-f" class="radio-label">♀ 女</label>
+    </div>
+  </div>
+  <div class="field">
+    <label>本人生日（農曆）<span class="req">*</span>
+      <span class="hint">範例：農曆89年05月20日 辰時</span>
+    </label>
+    <input type="text" id="birthday" placeholder="農曆89年05月20日 辰時（不知時辰可不填）">
+    <div style="margin-top:5px; font-size:12px; color:#ffffff;">
+      不知農曆可查：<a href="https://www.ttkca.org.tw/templates/ttkca/customs/bday2Lunar.php" target="_blank" style="color:#b05060;">國曆轉農曆工具 →</a>
+    </div>
+  </div>
+  <div class="field">
+    <label>現居住址 <span class="req">*</span></label>
+    <input type="text" id="address" placeholder="請填寫現居地址">
+  </div>
+
+  <!-- ② 對方資料 -->
+  <div class="section-title"><div class="num">2</div>對方資料 <span style="font-size:12px; font-weight:400; color:#ffffff; margin-left:8px;">有求對象者再填</span></div>
+
+  <div class="field">
+    <label>對方姓名</label>
+    <input type="text" id="t-name" placeholder="選填">
+  </div>
+  <div class="field">
+    <label>對方性別</label>
+    <div class="radio-group">
+      <input type="radio" name="tg" id="tg-m" value="男" class="radio-item">
+      <label for="tg-m" class="radio-label">♂ 男</label>
+      <input type="radio" name="tg" id="tg-f" value="女" class="radio-item">
+      <label for="tg-f" class="radio-label">♀ 女</label>
+      <input type="radio" name="tg" id="tg-n" value="不填" class="radio-item">
+      <label for="tg-n" class="radio-label">不填</label>
+    </div>
+  </div>
+  <div class="field">
+    <label>對方生日（農曆）<span class="hint">範例：農曆89年05月20日 辰時</span></label>
+    <input type="text" id="t-birthday" placeholder="選填">
+  </div>
+
+  <!-- ③ 祈福項目 -->
+  <div class="section-title"><div class="num">3</div>祈福項目選擇</div>
+
+  <div class="notice-box" style="margin-bottom:12px;">
+    <strong>單一項目 $2,100</strong>（部分特殊項目另有定價）｜可複選｜每項可指定份數
+  </div>
+
+  <div class="items-grid" id="items-grid"></div>
+
+  <div class="custom-box">
+    <p>✨ <strong style="color:var(--gold);">客製化專區</strong>｜請先洽詢海螺</p>
+    <div class="field" style="margin-bottom:10px;">
+      <input type="text" id="custom-name" placeholder="方案名稱">
+    </div>
+    <div class="field" style="margin-bottom:0;">
+      <input type="text" id="custom-price" placeholder="金額（數字）" oninput="updateTotal()">
+    </div>
+  </div>
+
+  <div class="selected-summary" id="selected-summary">
+    <h4>📋 已選項目明細</h4>
+    <div id="summary-lines"></div>
+  </div>
+
+  <!-- ④ 願望 -->
+  <div class="section-title"><div class="num">4</div>願望填寫</div>
+  <div class="notice-box" style="margin-bottom:12px; font-size:12px;">
+    願望請具體，<strong>30字以內</strong>。若有多個願望，填完後訊息備註給海螺。
+  </div>
+  <div class="field">
+    <label>願望內容 <span class="req">*</span></label>
+    <textarea id="wish" placeholder="例：化解和XXX之間的感情阻礙，互動越來越多，感情越來越甜蜜，早日牽緣在一起" maxlength="100"></textarea>
+    <div style="font-size:12px; color:var(--muted); margin-top:4px;" id="wish-count">0 / 30 字</div>
+  </div>
+
+  <!-- ⑤ 付款 -->
+  <div class="section-title"><div class="num">5</div>付款方式</div>
+  <div class="field">
+    <label>請選擇付款方式 <span class="req">*</span></label>
+    <div class="payment-options">
+      <input type="radio" name="pay" id="pay1" value="匯款(線上/ATM/臨櫃)" class="pay-item">
+      <label for="pay1" class="pay-label">🏦 匯款</label>
+      <input type="radio" name="pay" id="pay2" value="無摺存款" class="pay-item">
+      <label for="pay2" class="pay-label">📄 無摺存款</label>
+      <input type="radio" name="pay" id="pay3" value="刷卡一次付清" class="pay-item">
+      <label for="pay3" class="pay-label">💳 刷卡一次付清</label>
+      <input type="radio" name="pay" id="pay4" value="中租無卡分期" class="pay-item">
+      <label for="pay4" class="pay-label">📅 中租分期</label>
+      <input type="radio" name="pay" id="pay5" value="Paypal(海外)" class="pay-item">
+      <label for="pay5" class="pay-label">🌐 PayPal（海外）</label>
+    </div>
+  </div>
+  <div class="field">
+    <label>匯款後五碼 <span class="req">*</span>
+      <span class="hint">無後五碼請填付款日期時間 (例: 4/14 20:15)</span>
+    </label>
+    <input type="text" id="transfer" placeholder="例：12345 或 4/14 20:15">
+  </div>
+  <div class="bank-info">
+    <strong>匯款帳號：</strong><br>
+    銀行：中國信託 代碼 <strong>822</strong><br>
+    帳號：<strong>1855-4025-0866</strong><br>
+    <span style="font-size:12px; color:#888;">轉帳後請提供後五碼 / 截圖給海螺確認</span>
+  </div>
+  <div class="line-info">
+    💬 官方 LINE：
+    <a href="https://line.me/R/ti/p/@792edykw" target="_blank" style="color:#7fff7f; font-weight:700;">@792edykw</a>
+    <span style="font-size:12px; color:rgba(127,255,127,0.6);">填寫完成記得通知海螺 ♥</span>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ⑥ 加購 -->
+  <div class="section-title"><div class="num">6</div>占卜 / 八字加購 <span style="font-size:12px; font-weight:400; color:var(--muted); margin-left:6px;">選填</span></div>
+  <div class="items-grid" id="addon-grid"></div>
+
+  <button class="submit-btn" id="submit-btn" onclick="submitForm()">
+    🙏 確認送出報名資料
+  </button>
+
+</div>
+
+<!-- Sticky 總金額 -->
+<div class="total-bar">
+  <div>
+    <div class="total-label">本次合計金額</div>
+    <div style="font-size:11px; color:var(--muted); margin-top:2px;" id="item-count">尚未選擇項目</div>
+  </div>
+  <div class="total-amount" id="total-display">$0</div>
+</div>
+
+<button id="admin-toggle" onclick="openAdminModal()">🌸</button>
+<div id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════
+// 設定區：請填入你的 Apps Script 網址
+// ══════════════════════════════════════════
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxEK7eD4RNV8uUf2MGucQJt6ja55pg4CvAirXN2aJn_PDe3vwsafdpCxAiHfiLfc1an2g/exec';
+
+// 管理員密碼（可自行修改）
+const ADMIN_PW = 'magichalo2025';
+
+// ══════════════════════════════════════════
+// 項目資料
+// ══════════════════════════════════════════
+const ITEMS = [
+  { id:1,  name:'❶ 單身桃花',                          price:2100 },
+  { id:2,  name:'❷ 姻緣和合',                          price:2100 },
+  { id:3,  name:'❸ 夫妻和合',                          price:2100 },
+  { id:4,  name:'❹ 同性姻緣',                          price:2100 },
+  { id:5,  name:'❺ 感情貴人',                          price:2100 },
+  { id:6,  name:'❻ 事業貴人',                          price:2100 },
+  { id:7,  name:'❼ 十方轉運（消災解厄）',               price:2100 },
+  { id:8,  name:'❽ 正財提升',                          price:2100 },
+  { id:9,  name:'❾ 偏財提升',                          price:2100 },
+  { id:10, name:'❶⓪ 補本命財庫',                       price:2100 },
+  { id:11, name:'❶❶ 與冤親和解（迴向）',               price:2100 },
+  { id:12, name:'❶❷ 化解小人',                         price:2100 },
+  { id:13, name:'❶❸ 人際桃花',                         price:2100 },
+  { id:14, name:'❶❹ 桃花樹（澆水施肥）',               price:2100 },
+  { id:15, name:'❶❺ 家庭和合',                         price:2100 },
+  { id:16, name:'❶❻ 毛小孩健康平安',                   price:2100 },
+  { id:17, name:'❶❼ 還陰債',                           price:3600 },
+  { id:18, name:'❶❽ 普渡地基主',                       price:3600 },
+  { id:19, name:'❶❾ 超拔獸靈',                         price:3600 },
+  { id:20, name:'❷⓪ 超拔嬰靈',                         price:3600 },
+  { id:21, name:'❷❶ 迴向家族祖先',                     price:3600 },
+  { id:22, name:'❷❷ 迴向過世親人',                     price:3600 },
+  { id:23, name:'❷❸ 辭祖',                             price:3600 },
+  { id:24, name:'❷❹ 季斗（姻緣/財運/貴人/化煞/開運）', price:3600 },
+  { id:25, name:'❷❺ 年斗（姻緣/財運/貴人/化煞/開運）', price:8800 },
+  { id:26, name:'❷❻ 狐仙靈燈（包年）',                 price:8800 },
+  { id:27, name:'❷❼ 祭改',                             price:3600 },
+  { id:28, name:'❷❽ 天赦金（兩份）',                   price:1800 },
+];
+
+const ADDONS = [
+  { id:'a1', name:'塔羅占卜 15分鐘', price:800 },
+  { id:'a2', name:'塔羅占卜 30分鐘', price:1400 },
+  { id:'a3', name:'個人八字諮詢',    price:2800 },
+  { id:'a4', name:'八字＋塔羅',      price:3200 },
+  { id:'a5', name:'雙人姻緣合盤',    price:4200 },
+  { id:'a6', name:'年度流年諮詢',    price:3600 },
+];
+
+const itemState  = {}; // { id: qty }
+const addonState = {}; // { id: selected }
+
+// ══════════════════════════════════════════
+// 建立卡片
+// ══════════════════════════════════════════
+function buildGrid() {
+  const grid = document.getElementById('items-grid');
+  ITEMS.forEach(item => {
+    itemState[item.id] = 0;
+    const card = document.createElement('div');
+    card.className = 'item-card';
+    card.id = 'card-' + item.id;
+    card.onclick = () => toggleItem(item.id);
+    card.innerHTML = `
+      <div class="item-name">${item.name}</div>
+      <div class="item-price">$${item.price.toLocaleString()}</div>
+      <div class="qty-row" id="qty-${item.id}">
+        <span class="qty-label">份數</span>
+        <button class="qty-btn" onclick="event.stopPropagation();changeQty(${item.id},-1)">−</button>
+        <span class="qty-num" id="qnum-${item.id}">1</span>
+        <button class="qty-btn" onclick="event.stopPropagation();changeQty(${item.id},1)">＋</button>
+        <span class="qty-subtotal" id="qsub-${item.id}">$${item.price.toLocaleString()}</span>
+      </div>`;
+    grid.appendChild(card);
+  });
+
+  const ag = document.getElementById('addon-grid');
+  ADDONS.forEach(a => {
+    addonState[a.id] = false;
+    const card = document.createElement('div');
+    card.className = 'item-card';
+    card.id = 'acard-' + a.id;
+    card.onclick = () => toggleAddon(a.id);
+    card.innerHTML = `<div class="item-name">${a.name}</div><div class="item-price">$${a.price.toLocaleString()}</div>`;
+    ag.appendChild(card);
+  });
+}
+
+function toggleItem(id) {
+  const card = document.getElementById('card-' + id);
+  const qrow = document.getElementById('qty-' + id);
+  if (itemState[id] === 0) {
+    itemState[id] = 1;
+    card.classList.add('selected');
+    qrow.classList.add('show');
+  } else {
+    itemState[id] = 0;
+    card.classList.remove('selected');
+    qrow.classList.remove('show');
+  }
+  updateTotal();
+}
+
+function changeQty(id, delta) {
+  const item = ITEMS.find(i => i.id === id);
+  itemState[id] = Math.max(1, itemState[id] + delta);
+  document.getElementById('qnum-' + id).textContent = itemState[id];
+  document.getElementById('qsub-' + id).textContent = '$' + (item.price * itemState[id]).toLocaleString();
+  updateTotal();
+}
+
+function toggleAddon(id) {
+  const card = document.getElementById('acard-' + id);
+  addonState[id] = !addonState[id];
+  card.classList.toggle('selected', addonState[id]);
+  updateTotal();
+}
+
+// ══════════════════════════════════════════
+// 計算總金額
+// ══════════════════════════════════════════
+function updateTotal() {
+  let total = 0, itemsTotal = 0, count = 0;
+  const lines = [];
+
+  ITEMS.forEach(item => {
+    if (itemState[item.id] > 0) {
+      const sub = item.price * itemState[item.id];
+      total += sub; itemsTotal += sub; count++;
+      lines.push({ name: item.name, qty: itemState[item.id], price: sub });
+    }
+  });
+
+  ADDONS.forEach(a => {
+    if (addonState[a.id]) {
+      total += a.price; count++;
+      lines.push({ name: a.name, qty: 1, price: a.price });
+    }
+  });
+
+  const cp = parseInt(document.getElementById('custom-price').value) || 0;
+  if (cp > 0) {
+    const cn = document.getElementById('custom-name').value || '客製化方案';
+    total += cp; count++;
+    lines.push({ name: cn, qty: 1, price: cp });
+  }
+
+  document.getElementById('total-display').textContent = '$' + total.toLocaleString();
+  document.getElementById('item-count').textContent = count > 0 ? `共 ${count} 個項目` : '尚未選擇項目';
+
+  const summary = document.getElementById('selected-summary');
+  const summaryLines = document.getElementById('summary-lines');
+  if (lines.length > 0) {
+    summary.classList.add('show');
+    summaryLines.innerHTML = lines.map(l =>
+      `<div class="summary-line"><span>${l.name}${l.qty > 1 ? ' ×' + l.qty : ''}</span><span>$${l.price.toLocaleString()}</span></div>`
+    ).join('') +
+    `<div class="summary-line" style="margin-top:6px;padding-top:8px;border-top:1px solid rgba(212,164,52,0.3);">
+      <span style="color:var(--gold);font-weight:700;">合計</span>
+      <span style="font-size:15px;color:var(--gold);">$${total.toLocaleString()}</span>
+    </div>`;
+  } else {
+    summary.classList.remove('show');
+  }
+}
+
+// ══════════════════════════════════════════
+// 送出表單
+// ══════════════════════════════════════════
+async function submitForm() {
+  const name     = document.getElementById('name').value.trim();
+  const gender   = document.querySelector('input[name="gender"]:checked');
+  const birthday = document.getElementById('birthday').value.trim();
+  const address  = document.getElementById('address').value.trim();
+  const wish     = document.getElementById('wish').value.trim();
+  const payment  = document.querySelector('input[name="pay"]:checked');
+  const transfer = document.getElementById('transfer').value.trim();
+
+  if (!name)     { showToast('⚠️ 請填寫本人姓名', true); return; }
+  if (!gender)   { showToast('⚠️ 請選擇性別', true); return; }
+  if (!birthday) { showToast('⚠️ 請填寫農曆生日', true); return; }
+  if (!address)  { showToast('⚠️ 請填寫現居住址', true); return; }
+
+  const selectedItems = ITEMS.filter(i => itemState[i.id] > 0)
+    .map(i => ({ name: i.name, qty: itemState[i.id], price: i.price * itemState[i.id] }));
+  const selectedAddons = ADDONS.filter(a => addonState[a.id]).map(a => a.name);
+
+  if (selectedItems.length === 0 && selectedAddons.length === 0) {
+    showToast('⚠️ 請至少選擇一個祈福項目', true); return;
+  }
+  if (!wish)     { showToast('⚠️ 請填寫願望內容', true); return; }
+  if (!payment)  { showToast('⚠️ 請選擇付款方式', true); return; }
+  if (!transfer) { showToast('⚠️ 請填寫匯款後五碼', true); return; }
+
+  if (!APPS_SCRIPT_URL) {
+    showToast('⚠️ 尚未設定 Apps Script 網址，請聯絡管理員', true); return;
+  }
+
+  const customPrice = parseInt(document.getElementById('custom-price').value) || 0;
+  const total = selectedItems.reduce((s, i) => s + i.price, 0)
+              + selectedAddons.reduce((s, n) => { const a = ADDONS.find(x => x.name === n); return s + (a ? a.price : 0); }, 0)
+              + customPrice;
+
+  const payload = {
+    name, gender: gender.value, birthday, address,
+    targetName:     document.getElementById('t-name').value.trim(),
+    targetGender:   (document.querySelector('input[name="tg"]:checked') || {}).value || '',
+    targetBirthday: document.getElementById('t-birthday').value.trim(),
+    items:          selectedItems,
+    itemsTotal:     selectedItems.reduce((s, i) => s + i.price, 0),
+    addons:         selectedAddons,
+    customName:     document.getElementById('custom-name').value.trim(),
+    customPrice,
+    wish, payment: payment.value, transfer, total
+  };
+
+  const btn = document.getElementById('submit-btn');
+  btn.disabled = true;
+  btn.textContent = '⏳ 送出中...';
+
+  try {
+    const formData = new FormData();
+    formData.append('data', JSON.stringify(payload));
+
+    await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      body: formData
+    });
+    showToast('✅ 報名資料已送出！請至 LINE 通知海螺 ♥');
+    btn.textContent = '✅ 已送出';
+  } catch (err) {
+    showToast('❌ 送出失敗，請截圖後傳給海螺', true);
+    btn.disabled = false;
+    btn.textContent = '🙏 確認送出報名資料';
+  }
+}
+
+// ══════════════════════════════════════════
+// 管理員面板
+// ══════════════════════════════════════════
+function openAdminModal() {
+  document.getElementById('admin-pw-modal').classList.add('show');
+  setTimeout(() => document.getElementById('pw-input').focus(), 100);
+}
+
+function closeAdminModal(e) {
+  // 點背景關閉（不是點 pw-box 本身）
+  if (e && e.target !== document.getElementById('admin-pw-modal')) return;
+  document.getElementById('admin-pw-modal').classList.remove('show');
+  document.getElementById('pw-input').value = '';
+  document.getElementById('pw-err').style.display = 'none';
+}
+
+// ESC 關閉
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeAdminModal();
+});
+
+function checkPw() {
+  const val = document.getElementById('pw-input').value;
+  if (val === ADMIN_PW) {
+    document.getElementById('admin-pw-modal').classList.remove('show');
+    document.getElementById('admin-panel').style.display = 'block';
+    document.getElementById('pw-input').value = '';
+    document.getElementById('pw-err').style.display = 'none';
+  } else {
+    document.getElementById('pw-err').style.display = 'block';
+  }
+}
+
+function applyConfig() {
+  const event     = document.getElementById('cfg-event').value.trim();
+  const vegStart  = document.getElementById('cfg-veg-start').value.trim();
+  const vegEnd    = document.getElementById('cfg-veg-end').value.trim();
+
+  if (event) {
+    document.getElementById('event-badge').textContent = '❤️‍🔥 ' + event;
+  }
+  if (vegStart && vegEnd) {
+    document.getElementById('veg-dates').textContent = vegStart + ' 至 ' + vegEnd;
+  }
+
+  showToast('✅ 日期已更新！');
+  document.getElementById('admin-panel').style.display = 'none';
+}
+
+// ══════════════════════════════════════════
+// 工具
+// ══════════════════════════════════════════
+document.getElementById('wish').addEventListener('input', function() {
+  const len = this.value.length;
+  const el = document.getElementById('wish-count');
+  el.textContent = len + ' / 30 字';
+  el.style.color = len > 30 ? '#e74c3c' : 'var(--muted)';
+});
+
+function showToast(msg, isError = false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'show' + (isError ? ' error' : '');
+  setTimeout(() => { t.className = ''; }, 3500);
+}
+
+buildGrid();
+</script>
+</body>
+</html>
